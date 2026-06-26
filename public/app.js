@@ -25,21 +25,51 @@ class API {
     };
   }
 
-  static async request(endpoint, options = {}) {
-    const url = `${API_BASE}${endpoint}`;
-    const response = await fetch(url, {
-      ...options,
-      headers: this.getHeaders()
-    });
+static async request(endpoint, options = {}) {
+  const url = `${API_BASE}${endpoint}`;
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Request failed');
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...this.getHeaders(),
+      ...(options.headers || {})
     }
-
-    return response.json();
+  });
+    if (response.status === 204) {
+    return {};
   }
 
+ const contentType = response.headers.get("content-type") || "";
+
+  // Agar JSON nahi hai
+  if (!contentType.includes("application/json")) {
+    const text = await response.text();
+
+    if (!response.ok) {
+      throw new Error(text || `HTTP ${response.status}`);
+    }
+
+    return text;
+  }
+
+  let data;
+
+  try {
+    data = await response.json();
+  } catch (err) {
+    throw new Error("Server returned invalid or empty JSON.");
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data.error ||
+      data.message ||
+      `HTTP ${response.status}`
+    );
+  }
+
+  return data;
+}
   // Auth endpoints
   static async register(email, password, firstName, lastName) {
     return this.request('/auth/register', {
