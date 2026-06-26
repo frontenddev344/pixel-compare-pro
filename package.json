@@ -1,0 +1,34 @@
+{
+  "name": "pixel-compare-pro",
+  "version": "1.0.0",
+  "description": "Premium SaaS application for comparing websites and generating frontend implementation differences",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "playwright": "^1.40.0",
+    "uuid": "^9.0.0"
+  },
+  "keywords": [
+    "pixel",
+    "compare",
+    "website",
+    "comparison",
+    "frontend",
+    "analysis"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^8.1.0"
+  }
+}

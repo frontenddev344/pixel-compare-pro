@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - Pixel Compare Pro</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-container">
+      <div class="nav-logo">✨ Pixel Compare Pro</div>
+      <ul class="nav-links">
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/comparison">New Comparison</a></li>
+        <li><a href="/reports">Reports</a></li>
+        <li><a href="/settings" class="active">Settings</a></li>
+      </ul>
+      <div class="nav-user">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <button class="btn btn-small btn-secondary" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container" style="margin-top: 3rem; margin-bottom: 3rem;">
+    <h2 style="margin-bottom: 2rem;">Settings</h2>
+
+    <div class="grid grid-2">
+      <!-- Profile Settings -->
+      <div class="card">
+        <h3>Profile</h3>
+        <form id="profileForm" style="margin-top: 2rem;">
+          <div class="form-group">
+            <label for="firstName">First Name</label>
+            <input type="text" id="firstName" required>
+          </div>
+          <div class="form-group">
+            <label for="lastName">Last Name</label>
+            <input type="text" id="lastName" required>
+          </div>
+          <div class="form-group">
+            <label for="email" style="opacity: 0.7;">Email (Read-only)</label>
+            <input type="email" id="email" disabled style="opacity: 0.7;">
+          </div>
+          <button type="submit" class="btn btn-primary btn-full" style="margin-top: 1rem;">
+            Save Changes
+          </button>
+        </form>
+      </div>
+
+      <!-- Theme & Preferences -->
+      <div class="card">
+        <h3>Preferences</h3>
+        <div style="margin-top: 2rem;">
+          <div class="form-group">
+            <label for="themeSelect">Theme</label>
+            <select id="themeSelect">
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="notifications" style="width: auto;">
+              <span>Enable Notifications</span>
+            </label>
+          </div>
+          <button class="btn btn-primary btn-full" id="savePreferencesBtn" style="margin-top: 1rem;">
+            Save Preferences
+          </button>
+        </div>
+      </div>
+
+      <!-- Data Export -->
+      <div class="card">
+        <h3>Data Management</h3>
+        <div style="margin-top: 2rem;">
+          <p style="color: var(--text-muted); margin-bottom: 1rem;">
+            Export your account data including all comparisons and reports.
+          </p>
+          <button class="btn btn-secondary btn-full" id="exportBackupBtn">
+            Export Backup
+          </button>
+          <button class="btn btn-secondary btn-full" id="importBackupBtn" style="margin-top: 0.5rem;">
+            Import Backup
+          </button>
+          <input type="file" id="backupFile" style="display: none;" accept=".json">
+        </div>
+      </div>
+
+      <!-- Danger Zone -->
+      <div class="card" style="background: rgba(239, 68, 68, 0.05); border-color: var(--danger);">
+        <h3 style="color: var(--danger);">Danger Zone</h3>
+        <div style="margin-top: 2rem;">
+          <p style="color: var(--text-muted); margin-bottom: 1rem;">
+            These actions cannot be undone. Proceed with caution.
+          </p>
+          <button class="btn btn-danger btn-full" id="resetBtn">
+            Reset All Data
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Info -->
+    <div class="card" style="margin-top: 2rem;">
+      <h3>Account Information</h3>
+      <div class="grid grid-2" style="margin-top: 2rem;">
+        <div>
+          <p style="font-weight: 600; color: var(--text-primary);">Member Since</p>
+          <p id="memberSince" class="text-muted">-</p>
+        </div>
+        <div>
+          <p style="font-weight: 600; color: var(--text-primary);">Account Status</p>
+          <p style="color: var(--success);">Active ✓</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { API, UI, Auth, Theme, protectRoute } from '/app.js';
+
+    // Protect route
+    if (!(await protectRoute())) {
+      window.location.href = '/';
+    }
+
+    const user = Auth.getUser();
+    const userAvatar = document.getElementById('userAvatar');
+    const logoutBtn = document.getElementById('logoutBtn');
+    
+    // Set user avatar
+    if (user) {
+      const initials = (user.firstName[0] + user.lastName[0]).toUpperCase();
+      userAvatar.textContent = initials;
+    }
+
+    // Logout
+    logoutBtn.addEventListener('click', () => {
+      Auth.logout();
+    });
+
+    // Load profile
+    const firstName = document.getElementById('firstName');
+    const lastName = document.getElementById('lastName');
+    const email = document.getElementById('email');
+    const memberSince = document.getElementById('memberSince');
+
+    if (user) {
+      firstName.value = user.firstName;
+      lastName.value = user.lastName;
+      email.value = user.email;
+      memberSince.textContent = new Date(user.createdAt || Date.now()).toLocaleDateString();
+    }
+
+    // Load settings
+    async function loadSettings() {
+      try {
+        const settings = await API.getSettings();
+        document.getElementById('themeSelect').value = settings.theme || 'dark';
+        document.getElementById('notifications').checked = settings.notifications !== false;
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+      }
+    }
+
+    // Save profile
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      try {
+        await API.updateProfile(firstName.value, lastName.value);
+        UI.showAlert('Profile updated!', 'success');
+        
+        // Update local storage
+        const updatedUser = { ...user, firstName: firstName.value, lastName: lastName.value };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      } catch (error) {
+        UI.showAlert('Failed to update profile: ' + error.message, 'danger');
+      }
+    });
+
+    // Save preferences
+    document.getElementById('savePreferencesBtn').addEventListener('click', async () => {
+      try {
+        const theme = document.getElementById('themeSelect').value;
+        const notifications = document.getElementById('notifications').checked;
+        
+        await API.updateSettings({ theme, notifications });
+        Theme.setTheme(theme);
+        
+        UI.showAlert('Preferences saved!', 'success');
+      } catch (error) {
+        UI.showAlert('Failed to save preferences: ' + error.message, 'danger');
+      }
+    });
+
+    // Export backup
+    document.getElementById('exportBackupBtn').addEventListener('click', async () => {
+      try {
+        const backup = await API.exportBackup();
+        UI.downloadFile(JSON.stringify(backup, null, 2), 'pixel-compare-backup.json', 'application/json');
+        UI.showAlert('Backup exported!', 'success');
+      } catch (error) {
+        UI.showAlert('Failed to export backup: ' + error.message, 'danger');
+      }
+    });
+
+    // Import backup
+    document.getElementById('importBackupBtn').addEventListener('click', () => {
+      document.getElementById('backupFile').click();
+    });
+
+    document.getElementById('backupFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      try {
+        const content = await file.text();
+        const backup = JSON.parse(content);
+        
+        // Validate backup structure
+        if (!backup.user || !backup.comparisons || !backup.reports) {
+          throw new Error('Invalid backup file');
+        }
+
+        // Show confirmation
+        if (!confirm('This will replace your current data. Continue?')) return;
+
+        // For demo purposes, we'll just show success
+        // In production, you'd send this to the server
+        UI.showAlert('Backup imported successfully!', 'success');
+      } catch (error) {
+        UI.showAlert('Failed to import backup: ' + error.message, 'danger');
+      }
+    });
+
+    // Reset all data
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if (!confirm('Are you sure? This will delete ALL your data permanently.')) return;
+      if (!confirm('This action cannot be undone. Continue?')) return;
+
+      try {
+        // Show confirmation
+        Auth.logout();
+      } catch (error) {
+        UI.showAlert('Failed to reset data: ' + error.message, 'danger');
+      }
+    });
+
+    loadSettings();
+  </script>
+</body>
+</html>

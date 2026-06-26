@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Comparison - Pixel Compare Pro</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-container">
+      <div class="nav-logo">✨ Pixel Compare Pro</div>
+      <ul class="nav-links">
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/comparison" class="active">New Comparison</a></li>
+        <li><a href="/reports">Reports</a></li>
+        <li><a href="/settings">Settings</a></li>
+      </ul>
+      <div class="nav-user">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <button class="btn btn-small btn-secondary" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container" style="margin-top: 3rem; margin-bottom: 3rem;">
+    <h2 style="margin-bottom: 0.5rem;">Compare Two Websites</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 3rem;">
+      Enter two URLs to analyze their frontend differences
+    </p>
+
+    <!-- Comparison Form -->
+    <div class="card" style="max-width: 800px;">
+      <form id="comparisonForm">
+        <div class="form-group">
+          <label for="referenceUrl">Reference Website URL</label>
+          <input 
+            type="url" 
+            id="referenceUrl" 
+            placeholder="https://example.com" 
+            required
+          >
+          <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+            The reference/source website to compare against
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="targetUrl">Target Website URL</label>
+          <input 
+            type="url" 
+            id="targetUrl" 
+            placeholder="https://target.com" 
+            required
+          >
+          <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+            The target/destination website to compare
+          </p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <a href="/dashboard" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary" id="submitBtn">
+            Start Comparison
+          </button>
+        </div>
+      </form>
+
+      <!-- Loading State -->
+      <div id="loadingState" class="hidden" style="text-align: center; padding: 3rem;">
+        <div class="spinner" style="margin: 0 auto 1rem;"></div>
+        <h4>Analyzing websites...</h4>
+        <p style="color: var(--text-muted); margin-top: 1rem;">
+          This may take a few minutes. Please don't close this page.
+        </p>
+      </div>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="grid grid-2" style="margin-top: 4rem;">
+      <div class="card card-small">
+        <h4 style="color: var(--accent);">💻 What We Analyze</h4>
+        <ul style="color: var(--text-secondary); margin-top: 1rem;">
+          <li>✓ Typography (font size, family, weight)</li>
+          <li>✓ Colors (text, background)</li>
+          <li>✓ Spacing (padding, margin)</li>
+          <li>✓ Layout (width, height, border-radius)</li>
+          <li>✓ Visual Effects (shadows, opacity)</li>
+        </ul>
+      </div>
+      <div class="card card-small">
+        <h4 style="color: var(--primary);">📊 What You Get</h4>
+        <ul style="color: var(--text-secondary); margin-top: 1rem;">
+          <li>✓ Match Score Percentage</li>
+          <li>✓ Detailed Issue Breakdown</li>
+          <li>✓ Side-by-side Screenshots</li>
+          <li>✓ Auto-generated CSS Fixes</li>
+          <li>✓ Exportable Reports</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Requirements -->
+    <div class="card" style="background: rgba(6, 182, 212, 0.05); border-color: var(--accent); margin-top: 2rem;">
+      <h4>Requirements</h4>
+      <ul style="color: var(--text-secondary); margin-top: 1rem;">
+        <li>• Both websites must be publicly accessible</li>
+        <li>• URLs must be valid and include protocol (http:// or https://)</li>
+        <li>• Websites should load within 30 seconds</li>
+        <li>• JavaScript execution will be allowed</li>
+      </ul>
+    </div>
+  </div>
+
+  <script type="module">
+    import { API, UI, Auth, Validation, protectRoute } from '/app.js';
+
+    // Protect route
+    if (!(await protectRoute())) {
+      window.location.href = '/';
+    }
+
+    const user = Auth.getUser();
+    const userAvatar = document.getElementById('userAvatar');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const comparisonForm = document.getElementById('comparisonForm');
+    const referenceUrl = document.getElementById('referenceUrl');
+    const targetUrl = document.getElementById('targetUrl');
+    const submitBtn = document.getElementById('submitBtn');
+    const loadingState = document.getElementById('loadingState');
+
+    // Set user avatar
+    if (user) {
+      const initials = (user.firstName[0] + user.lastName[0]).toUpperCase();
+      userAvatar.textContent = initials;
+    }
+
+    // Logout
+    logoutBtn.addEventListener('click', () => {
+      Auth.logout();
+    });
+
+    // Handle form submission
+    comparisonForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const refUrl = referenceUrl.value.trim();
+      const tgtUrl = targetUrl.value.trim();
+
+      // Validate URLs
+      const validation = Validation.validateComparison(refUrl, tgtUrl);
+      if (!validation.valid) {
+        UI.showAlert(validation.error, 'danger');
+        return;
+      }
+
+      try {
+        // Show loading state
+        comparisonForm.classList.add('hidden');
+        loadingState.classList.remove('hidden');
+        submitBtn.disabled = true;
+
+        // Create comparison
+        const result = await API.createComparison(refUrl, tgtUrl);
+
+        UI.showAlert('Comparison completed!', 'success');
+        
+        // Save comparison ID to session storage for results page
+        sessionStorage.setItem('lastComparisonId', result.comparison.id);
+
+        // Redirect to results
+        setTimeout(() => {
+          window.location.href = `/results?id=${result.comparison.id}`;
+        }, 1500);
+      } catch (error) {
+        console.error('Comparison error:', error);
+        UI.showAlert('Comparison failed: ' + error.message, 'danger');
+        
+        // Reset form
+        comparisonForm.classList.remove('hidden');
+        loadingState.classList.add('hidden');
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

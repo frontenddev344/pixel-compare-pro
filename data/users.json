@@ -1,0 +1,10 @@
+[
+  {
+    "id": "bfcf087f-a8db-4f85-b0d0-925c51c4e25b",
+    "email": "test@test.com",
+    "password": "$2a$10$7Ojn6dWzRiZfjnSixOWAZ.U8kVoXQ1OAU.CwB5MigCfm0mdzoEV8y",
+    "firstName": "Nancy",
+    "lastName": "Arora",
+    "createdAt": "2026-06-24T14:19:01.657Z"
+  }
+]

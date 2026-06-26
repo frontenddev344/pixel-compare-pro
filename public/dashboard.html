@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Pixel Compare Pro</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-container">
+      <div class="nav-logo">✨ Pixel Compare Pro</div>
+      <ul class="nav-links">
+        <li><a href="/dashboard" class="active">Dashboard</a></li>
+        <li><a href="/comparison">New Comparison</a></li>
+        <li><a href="/reports">Reports</a></li>
+        <li><a href="/settings">Settings</a></li>
+      </ul>
+      <div class="nav-user">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <button class="btn btn-small btn-secondary" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container" style="margin-top: 3rem; margin-bottom: 3rem;">
+    <h2 style="margin-bottom: 2rem;">Welcome to Pixel Compare Pro</h2>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-4" style="margin-bottom: 4rem;">
+      <div class="card card-stat">
+        <div class="card-stat-label">Total Comparisons</div>
+        <div class="card-stat-value" id="totalComparisons">0</div>
+      </div>
+      <div class="card card-stat">
+        <div class="card-stat-label">Reports Generated</div>
+        <div class="card-stat-value" id="totalReports">0</div>
+      </div>
+      <div class="card card-stat">
+        <div class="card-stat-label">Avg Match Score</div>
+        <div class="card-stat-value" id="avgMatchScore">0%</div>
+      </div>
+      <div class="card card-stat">
+        <div class="card-stat-label">Issues Found</div>
+        <div class="card-stat-value" id="totalIssues">0</div>
+      </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="card" style="text-align: center; margin-bottom: 4rem;">
+      <h3>Start Comparing</h3>
+      <p style="margin: 1rem 0; color: var(--text-secondary);">
+        Compare two websites to analyze frontend differences and get auto-generated CSS fixes
+      </p>
+      <a href="/comparison" class="btn btn-primary btn-large">
+        Create New Comparison
+      </a>
+    </div>
+
+    <!-- Recent Comparisons -->
+    <h3 style="margin-bottom: 1.5rem;">Recent Comparisons</h3>
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Reference URL</th>
+            <th>Target URL</th>
+            <th>Match Score</th>
+            <th>Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="recentComparisons">
+          <tr>
+            <td colspan="5" class="text-center text-muted">Loading...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    import { API, UI, Auth, protectRoute } from '/app.js';
+
+    // Protect route
+    if (!(await protectRoute())) {
+      window.location.href = '/';
+    }
+
+    const user = Auth.getUser();
+    const userAvatar = document.getElementById('userAvatar');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    // Set user avatar
+    if (user) {
+      const initials = (user.firstName[0] + user.lastName[0]).toUpperCase();
+      userAvatar.textContent = initials;
+    }
+
+    // Logout
+    logoutBtn.addEventListener('click', () => {
+      Auth.logout();
+    });
+
+    // Load dashboard data
+    async function loadDashboard() {
+      try {
+        // Get statistics
+        const stats = await API.getStats();
+        document.getElementById('totalComparisons').textContent = stats.totalComparisons;
+        document.getElementById('totalReports').textContent = stats.totalReports;
+        document.getElementById('avgMatchScore').textContent = Math.round(stats.avgMatchScore) + '%';
+        document.getElementById('totalIssues').textContent = stats.totalIssues;
+
+        // Get recent comparisons
+        const comparisons = await API.getRecentComparisons();
+        const tbody = document.getElementById('recentComparisons');
+        
+        if (comparisons.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No comparisons yet. <a href="/comparison">Create one</a></td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = comparisons.map(c => `
+          <tr>
+            <td>${c.referenceUrl.split('//')[1].split('/')[0]}</td>
+            <td>${c.targetUrl.split('//')[1].split('/')[0]}</td>
+            <td>
+              <span class="text-accent" style="font-weight: 600;">
+                ${Math.round(c.matchScore)}%
+              </span>
+            </td>
+            <td class="text-muted">${UI.formatDate(c.createdAt)}</td>
+            <td>
+              <a href="/results?id=${c.id}" class="btn btn-small btn-secondary">View</a>
+            </td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        UI.showAlert('Failed to load dashboard: ' + error.message, 'danger');
+      }
+    }
+
+    loadDashboard();
+  </script>
+</body>
+</html>

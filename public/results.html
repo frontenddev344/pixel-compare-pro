@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Results - Pixel Compare Pro</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .fix-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .selector {
+      font-family: 'Monaco', 'Courier New', monospace;
+      color: var(--accent);
+      font-weight: 600;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .values {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 0.75rem 0;
+    }
+
+    .value {
+      padding: 0.5rem;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 0.25rem;
+    }
+
+    .value-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+
+    .value-content {
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      word-break: break-all;
+    }
+
+    .css-fix {
+      background: rgba(10, 182, 212, 0.1);
+      border-left: 3px solid var(--accent);
+      padding: 0.75rem;
+      border-radius: 0.25rem;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.875rem;
+      color: var(--accent);
+      margin-top: 0.75rem;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 0.75rem 1.5rem;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+      border-bottom: 2px solid transparent;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .copy-btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .code-block {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      overflow-x: auto;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.875rem;
+      color: var(--accent);
+      margin: 1rem 0;
+      line-height: 1.5;
+    }
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-container">
+      <div class="nav-logo">✨ Pixel Compare Pro</div>
+      <ul class="nav-links">
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/comparison">New Comparison</a></li>
+        <li><a href="/reports">Reports</a></li>
+        <li><a href="/settings">Settings</a></li>
+      </ul>
+      <div class="nav-user">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <button class="btn btn-small btn-secondary" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container" style="margin-top: 3rem; margin-bottom: 3rem;">
+    <div class="flex-between" style="margin-bottom: 2rem;">
+      <h2>Comparison Results</h2>
+      <div class="flex" style="gap: 0.5rem; flex-wrap: wrap;">
+        <button class="btn btn-secondary btn-small" id="copyAllBtn">Copy All CSS</button>
+        <button class="btn btn-secondary btn-small" id="exportBtn">Export JSON</button>
+        <button class="btn btn-danger btn-small" id="deleteBtn">Delete</button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" style="text-align: center; padding: 4rem;">
+      <div class="spinner" style="margin: 0 auto 1rem;"></div>
+      <h4>Loading results...</h4>
+    </div>
+
+    <!-- Results Container -->
+    <div id="resultsContainer" class="hidden">
+      <!-- Match Score -->
+      <div class="card" style="text-align: center;">
+        <h3>Match Score</h3>
+        <div style="margin: 2rem 0;">
+          <svg width="200" height="200" style="margin: 0 auto; display: block;">
+            <circle cx="100" cy="100" r="90" fill="none" stroke="var(--border)" stroke-width="8"/>
+            <circle id="scoreCircle" cx="100" cy="100" r="90" fill="none" stroke="var(--primary)" 
+                    stroke-width="8" stroke-linecap="round" stroke-dasharray="0 565.5"/>
+          </svg>
+          <div style="position: relative; top: -140px; text-align: center;">
+            <div style="font-size: 2.5rem; font-weight: 700; color: var(--primary);">
+              <span id="scoreValue">0</span>%
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- URLs -->
+      <div class="card" style="margin-top: 2rem;">
+        <h4>Comparison Details</h4>
+        <div class="grid grid-2" style="margin-top: 1rem; gap: 2rem;">
+          <div>
+            <p style="font-weight: 600; color: var(--text-primary);">Reference URL</p>
+            <p id="refUrl" style="word-break: break-all; color: var(--accent); font-size: 0.875rem;">-</p>
+          </div>
+          <div>
+            <p style="font-weight: 600; color: var(--text-primary);">Target URL</p>
+            <p id="tgtUrl" style="word-break: break-all; color: var(--accent); font-size: 0.875rem;">-</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics -->
+      <div class="card" style="margin-top: 2rem;">
+        <h4>Analysis Statistics</h4>
+        <div class="stat-row">
+          <div class="stat-item">
+            <div class="stat-value" id="elementsRef">0</div>
+            <div class="stat-label">Reference Elements</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="elementsTarget">0</div>
+            <div class="stat-label">Target Elements</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="elementsMatched">0</div>
+            <div class="stat-label">Matched Elements</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="totalDiffs">0</div>
+            <div class="stat-label">Total Differences</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Screenshots -->
+      <div class="card" style="margin-top: 2rem;">
+        <h4>Screenshots</h4>
+        <div class="grid grid-2" style="margin-top: 1rem; gap: 2rem;">
+          <div style="text-align: center;">
+            <h5 style="color: var(--text-secondary); margin-bottom: 1rem;">Reference Website</h5>
+            <img id="refScreenshot" src="" alt="Reference" style="width: 100%; border-radius: 0.5rem; border: 1px solid var(--border);">
+          </div>
+          <div style="text-align: center;">
+            <h5 style="color: var(--text-secondary); margin-bottom: 1rem;">Target Website</h5>
+            <img id="tgtScreenshot" src="" alt="Target" style="width: 100%; border-radius: 0.5rem; border: 1px solid var(--border);">
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Fixes -->
+      <div class="card" style="margin-top: 2rem;">
+        <h3>Detailed CSS Fixes</h3>
+        
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="all-fixes">
+            📋 All Fixes (<span id="fixCount">0</span>)
+          </button>
+          <button class="tab-btn" data-tab="typography">
+            📝 Typography (<span id="typCount">0</span>)
+          </button>
+          <button class="tab-btn" data-tab="colors">
+            🎨 Colors (<span id="colorCount">0</span>)
+          </button>
+          <button class="tab-btn" data-tab="spacing">
+            📏 Spacing (<span id="spacingCount">0</span>)
+          </button>
+          <button class="tab-btn" data-tab="layout">
+            📐 Layout (<span id="layoutCount">0</span>)
+          </button>
+          <button class="tab-btn" data-tab="buttons">
+            🔘 Buttons (<span id="btnCount">0</span>)
+          </button>
+        </div>
+
+        <!-- All Fixes -->
+        <div id="all-fixes" class="tab-content active">
+          <div id="allFixesList"></div>
+        </div>
+
+        <!-- Typography -->
+        <div id="typography" class="tab-content">
+          <div id="typographyList"></div>
+        </div>
+
+        <!-- Colors -->
+        <div id="colors" class="tab-content">
+          <div id="colorsList"></div>
+        </div>
+
+        <!-- Spacing -->
+        <div id="spacing" class="tab-content">
+          <div id="spacingList"></div>
+        </div>
+
+        <!-- Layout -->
+        <div id="layout" class="tab-content">
+          <div id="layoutList"></div>
+        </div>
+
+        <!-- Buttons -->
+        <div id="buttons" class="tab-content">
+          <div id="buttonsList"></div>
+        </div>
+      </div>
+
+      <!-- CSS Code -->
+      <div class="card" style="margin-top: 2rem;">
+        <div class="flex-between" style="margin-bottom: 1rem;">
+          <h3 style="margin: 0;">Complete CSS</h3>
+          <button class="btn btn-small btn-primary" id="copyCSSBtn">Copy Code</button>
+        </div>
+        <div class="code-block" id="cssFixes"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { API, UI, Auth, protectRoute } from '/app.js';
+
+    if (!(await protectRoute())) {
+      window.location.href = '/';
+    }
+
+    const user = Auth.getUser();
+    document.getElementById('userAvatar').textContent = (user.firstName[0] + user.lastName[0]).toUpperCase();
+    document.getElementById('logoutBtn').addEventListener('click', () => Auth.logout());
+
+    const params = new URLSearchParams(window.location.search);
+    const comparisonId = params.get('id');
+
+    if (!comparisonId) {
+      UI.showAlert('No comparison ID provided', 'danger');
+      window.location.href = '/dashboard';
+    }
+
+    // Render fix card
+    function renderFix(fix) {
+      return `
+        <div class="fix-card">
+          <div class="selector">${fix.selector}</div>
+          <div class="values">
+            <div class="value">
+              <div class="value-label">Reference</div>
+              <div class="value-content">${fix.property}:<br>${fix.reference}</div>
+            </div>
+            <div class="value">
+              <div class="value-label">Target</div>
+              <div class="value-content">${fix.property}:<br>${fix.target}</div>
+            </div>
+          </div>
+          <div class="css-fix">${fix.selector} {<br>  ${fix.cssLine}<br>}</div>
+          <button class="btn btn-small btn-secondary copy-btn" onclick="copyFix('${fix.selector} {\\n  ${fix.cssLine}\\n}')">Copy Fix</button>
+        </div>
+      `;
+    }
+
+    window.copyFix = (code) => {
+      UI.copyToClipboard(code);
+    };
+
+    // Load results
+    async function loadResults() {
+      try {
+        const comparison = await API.getComparison(comparisonId);
+
+        // URLs
+        document.getElementById('refUrl').textContent = comparison.referenceUrl;
+        document.getElementById('tgtUrl').textContent = comparison.targetUrl;
+
+        // Screenshots
+        document.getElementById('refScreenshot').src = comparison.referenceScreenshot;
+        document.getElementById('tgtScreenshot').src = comparison.targetScreenshot;
+
+        // Stats
+        document.getElementById('elementsRef').textContent = comparison.refElementsCount || 0;
+        document.getElementById('elementsTarget').textContent = comparison.targetElementsCount || 0;
+        document.getElementById('elementsMatched').textContent = comparison.matchedElementsCount || 0;
+        document.getElementById('totalDiffs').textContent = comparison.totalDifferences || 0;
+
+        // Score
+        const score = Math.round(comparison.matchScore);
+        document.getElementById('scoreValue').textContent = score;
+        const circumference = 2 * Math.PI * 90;
+        const offset = circumference - (score / 100) * circumference;
+        document.getElementById('scoreCircle').style.strokeDasharray = `${circumference - offset} ${circumference}`;
+
+        // Counts
+        const analysis = comparison.analysis || {};
+        document.getElementById('typCount').textContent = analysis.typographyCount || 0;
+        document.getElementById('colorCount').textContent = analysis.colorCount || 0;
+        document.getElementById('spacingCount').textContent = analysis.spacingCount || 0;
+        document.getElementById('layoutCount').textContent = analysis.layoutCount || 0;
+        document.getElementById('btnCount').textContent = analysis.buttonCount || 0;
+        document.getElementById('fixCount').textContent = (comparison.detailedFixes || []).length;
+
+        // Render fixes
+        const fixes = comparison.detailedFixes || [];
+        
+        const allHTML = fixes.map(renderFix).join('');
+        document.getElementById('allFixesList').innerHTML = allHTML || '<p class="text-muted">No fixes needed</p>';
+
+        const typHTML = fixes.filter(f => f.category === 'typography').map(renderFix).join('');
+        document.getElementById('typographyList').innerHTML = typHTML || '<p class="text-muted">No typography issues</p>';
+
+        const colorHTML = fixes.filter(f => f.category === 'colors').map(renderFix).join('');
+        document.getElementById('colorsList').innerHTML = colorHTML || '<p class="text-muted">No color issues</p>';
+
+        const spacingHTML = fixes.filter(f => f.category === 'spacing').map(renderFix).join('');
+        document.getElementById('spacingList').innerHTML = spacingHTML || '<p class="text-muted">No spacing issues</p>';
+
+        const layoutHTML = fixes.filter(f => f.category === 'layout').map(renderFix).join('');
+        document.getElementById('layoutList').innerHTML = layoutHTML || '<p class="text-muted">No layout issues</p>';
+
+        const btnHTML = fixes.filter(f => f.category === 'buttons').map(renderFix).join('');
+        document.getElementById('buttonsList').innerHTML = btnHTML || '<p class="text-muted">No button issues</p>';
+
+        // CSS
+        document.getElementById('cssFixes').textContent = comparison.cssFixes;
+
+        // Hide loading, show results
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('resultsContainer').classList.remove('hidden');
+      } catch (error) {
+        UI.showAlert('Failed to load results: ' + error.message, 'danger');
+        window.location.href = '/dashboard';
+      }
+    }
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Copy all CSS
+    document.getElementById('copyAllBtn').addEventListener('click', () => {
+      const css = document.getElementById('cssFixes').textContent;
+      UI.copyToClipboard(css);
+    });
+
+    document.getElementById('copyCSSBtn').addEventListener('click', () => {
+      const css = document.getElementById('cssFixes').textContent;
+      UI.copyToClipboard(css);
+    });
+
+    // Export
+    document.getElementById('exportBtn').addEventListener('click', async () => {
+      try {
+        const comparison = await API.getComparison(comparisonId);
+        const report = {
+          matchScore: comparison.matchScore,
+          referenceUrl: comparison.referenceUrl,
+          targetUrl: comparison.targetUrl,
+          analysis: comparison.analysis,
+          fixes: comparison.detailedFixes,
+          css: comparison.cssFixes,
+          exportDate: new Date().toISOString()
+        };
+        UI.downloadFile(JSON.stringify(report, null, 2), 'comparison-report.json', 'application/json');
+        UI.showAlert('Report exported!', 'success');
+      } catch (error) {
+        UI.showAlert('Export failed: ' + error.message, 'danger');
+      }
+    });
+
+    // Delete
+    document.getElementById('deleteBtn').addEventListener('click', async () => {
+      if (!confirm('Delete this comparison?')) return;
+      try {
+        await API.deleteComparison(comparisonId);
+        UI.showAlert('Deleted', 'success');
+        setTimeout(() => window.location.href = '/dashboard', 1500);
+      } catch (error) {
+        UI.showAlert('Delete failed: ' + error.message, 'danger');
+      }
+    });
+
+    loadResults();
+  </script>
+</body>
+</html>
