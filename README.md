@@ -54,7 +54,7 @@
 ```
 pixel-compare-pro/
 ├── public/                 # Frontend files
-│   ├── index.html         # Login/Register page
+│   ├──          # Login/Register page
 │   ├── dashboard.html     # Dashboard with stats
 │   ├── comparison.html    # URL comparison form
 │   ├── results.html       # Comparison results
