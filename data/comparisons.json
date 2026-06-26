@@ -22,5 +22,17 @@
     "totalDifferences": 0,
     "cssFixes": "/* Pixel Compare Pro - CSS Fixes */\n\n",
     "createdAt": "2026-06-25T10:39:01.666Z"
+  },
+  {
+    "id": "a835b50f-429c-4ab0-bc16-a871294e6253",
+    "userId": "bfcf087f-a8db-4f85-b0d0-925c51c4e25b",
+    "referenceUrl": "https://www.apple.com",
+    "targetUrl": "https://shopee.sg/",
+    "matchScore": 60,
+    "referenceScreenshot": "/screenshots/ref_1782475619640.png",
+    "targetScreenshot": "/screenshots/target_1782475625824.png",
+    "totalDifferences": 0,
+    "cssFixes": "/* Pixel Compare Pro - CSS Fixes */\n\n",
+    "createdAt": "2026-06-26T12:07:07.393Z"
   }
 ]
